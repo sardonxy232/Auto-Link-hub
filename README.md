@@ -1,115 +1,127 @@
-🚗 AutoLink Hub
+<!-- Banner / Hero Section -->
+<p align="center">
+  <img src="https://img.shields.io/badge/AutoLink-Hub-blue?style=for-the-badge&logo=car" alt="AutoLink Hub" />
+</p>
 
-AutoLink Hub is a vehicle marketplace and service hub that connects car owners, dealers, part sellers, and mechanics in one platform.
-Users can buy/sell cars, order automobile parts, book mechanic services, and leave reviews, all in a seamless experience.
+<h1 align="center">🚗 AutoLink Hub</h1>
+<p align="center">
+  <b>A vehicle marketplace & service hub connecting car owners, dealers, part sellers, and mechanics.</b>
+</p>
 
-📌 Features
+<p align="center">
+  <a href="#"><img src="https://img.shields.io/badge/Python-3.10+-blue?style=for-the-badge&logo=python" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/Django-REST%20Framework-green?style=for-the-badge&logo=django" /></a>
+  <a href="#"><img src="https://img.shields.io/badge/License-MIT-lightgrey?style=for-the-badge" /></a>
+</p>
 
-Authentication & User Management
+---
 
-User registration (Dealer, Car Owner, Mechanic)
+## ✨ Features
 
-JWT-based login and authentication
+- 🔐 <b>Authentication & User Management</b>  
+   Register as Dealer, Car Owner, or Mechanic. Secure JWT authentication and profile management.
 
-Profile management (view/update/delete)
+- 🚘 <b>Car Listings</b>  
+   Add, update, delete, and search cars by make, model, year, and location.
 
-Car Listings
+- 🔧 <b>Part Listings</b>  
+   Add and manage auto parts with filters like make, model, and price.
 
-Add, update, delete car listings
+- 📦 <b>Orders</b>  
+   Create and manage orders for cars and parts. Track status and cancel when needed.
 
-Browse cars with filters (make, model, year, location)
+- 🛠 <b>Service Bookings</b>  
+   Book mechanics or service providers with full management control.
 
-Part Listings
+- ⭐ <b>Reviews</b>  
+   Post, update, and delete reviews for cars, parts, and services.
 
-Add, update, delete automobile parts
+---
 
-Browse parts with filters (make, model, price)
+## 🛠 Tech Stack
 
-Orders
+<table>
+  <tr>
+    <td><b>Backend</b></td>
+    <td>Django REST Framework (or FastAPI)</td>
+  </tr>
+  <tr>
+    <td><b>Database</b></td>
+    <td>PostgreSQL (SQLite for development)</td>
+  </tr>
+  <tr>
+    <td><b>Authentication</b></td>
+    <td>JWT (JSON Web Tokens)</td>
+  </tr>
+  <tr>
+    <td><b>3rd-Party APIs</b></td>
+    <td>Paystack / Flutterwave (Payments), Google Maps API (Location)</td>
+  </tr>
+</table>
 
-Create and manage orders for cars and parts
+---
 
-Update/cancel orders
+## 📂 Project Structure
 
-Track order status
-
-Service Bookings
-
-Book mechanics or service providers
-
-Manage booking status (update/cancel)
-
-Reviews
-
-Post reviews for cars, parts, and services
-
-Update or delete reviews
-
-🛠️ Tech Stack
-
-Backend Framework: Django REST Framework (or FastAPI)
-
-Database: PostgreSQL (SQLite for development)
-
-Authentication: JWT (JSON Web Tokens)
-
-3rd-Party APIs (Optional):
-
-Paystack / Flutterwave for payments
-
-Google Maps API for location-based services
-
-📂 Project Structure
 autolink_hub/
 │── manage.py
 │── requirements.txt
 │
-├── autolink/                # Main project settings
-│   ├── settings.py
-│   ├── urls.py
+├── autolink/ # Project settings
+│ ├── settings.py
+│ ├── urls.py
 │
 ├── apps/
-│   ├── users/               # Authentication & User management
-│   ├── cars/                # Car listings
-│   ├── parts/               # Parts listings
-│   ├── orders/              # Orders system
-│   ├── bookings/            # Service bookings
-│   ├── reviews/             # Reviews
+│ ├── users/ # Authentication & User management
+│ ├── cars/ # Car listings
+│ ├── parts/ # Parts listings
+│ ├── orders/ # Orders system
+│ ├── bookings/ # Service bookings
+│ ├── reviews/ # Reviews
 │
-├── tests/                   # Unit & integration tests
-├── docs/                    # API documentation (Swagger/Postman)
-└── scripts/                 # Deployment / setup scripts
+├── tests/ # Unit & integration tests
+├── docs/ # API documentation (Swagger/Postman)
+└── scripts/ # Deployment scripts
 
-🚀 Getting Started
-1. Clone the Repository
+yaml
+Copy code
+
+---
+
+## 🚀 Getting Started
+
+<details>
+<summary><b>🔹 Step 1: Clone the Repository</b></summary>
+
+```bash
 git clone https://github.com/yourusername/autolink-hub.git
 cd autolink-hub
-
-2. Create Virtual Environment & Install Dependencies
+</details> <details> <summary><b>🔹 Step 2: Create Virtual Environment & Install Dependencies</b></summary>
+bash
+Copy code
 python -m venv venv
 source venv/bin/activate   # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
-
-3. Run Migrations
+</details> <details> <summary><b>🔹 Step 3: Run Migrations & Start Server</b></summary>
+bash
+Copy code
 python manage.py migrate
-
-4. Start Development Server
 python manage.py runserver
+</details>
+⚙️ Environment Variables
+Create a .env file in the root folder:
 
-🗓️ Roadmap
-
- Week 1 – Setup & Authentication
-
- Week 2 – Car & Part Listings
-
- Week 3 – Orders & Service Bookings
-
- Week 4 – Reviews, Payments & Final Testing
-
-📖 Documentation
-
-API documentation will be available via Swagger UI or Postman after setup.
+ini
+Copy code
+SECRET_KEY=your_secret_key
+DEBUG=True
+DATABASE_URL=postgres://user:password@localhost:5432/autolinkhub
+ALLOWED_HOSTS=127.0.0.1,localhost
+🗓 Roadmap
+✅ Week 1 – Setup & Authentication
+✅ Week 2 – Car & Part Listings
+⬜ Week 3 – Orders & Service Bookings
+⬜ Week 4 – Reviews, Payments & Final Testing
 
 👥 Contributors
-
-Joshua Olayiwola Oluwaseun – Backend Developer
+<p align="center"> <b>Joshua Olayiwola Oluwaseun</b> <br> <i>Backend Developer</i> </p>
