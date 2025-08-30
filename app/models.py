@@ -1,5 +1,14 @@
-from sqlalchemy import Column, Integer, String
-from .database import Base
+# app/models.py
+from sqlalchemy import Column, Integer, String, Enum
+from app.database import Base
+import enum
+
+# Define possible roles
+class UserRole(enum.Enum):
+    farmer = "farmer"
+    buyer = "buyer"
+    supplier = "supplier"
+    logistics = "logistics"
 
 class User(Base):
     __tablename__ = "users"
@@ -8,4 +17,4 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    role = Column(String, nullable=False)  # farmer, buyer, supplier, logistics
+    role = Column(Enum(UserRole), nullable=False)

@@ -1,16 +1,27 @@
+# app/schemas.py
 from pydantic import BaseModel, EmailStr
+from enum import Enum
 
-class UserCreate(BaseModel):
+# Role Enum
+class UserRole(str, Enum):
+    farmer = "farmer"
+    buyer = "buyer"
+    supplier = "supplier"
+    logistics = "logistics"
+
+# Base user shared props
+class UserBase(BaseModel):
     username: str
     email: EmailStr
+    role: UserRole
+
+# Schema for creating a new user (signup)
+class UserCreate(UserBase):
     password: str
-    role: str
 
-class UserResponse(BaseModel):
+# Schema for showing user data (no password exposure)
+class UserResponse(UserBase):
     id: int
-    username: str
-    email: EmailStr
-    role: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # For SQLAlchemy -> Pydantic
