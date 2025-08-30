@@ -1,6 +1,8 @@
 # app/schemas.py
 from pydantic import BaseModel, EmailStr
 from enum import Enum
+from typing import Optional
+
 
 # Role Enum
 class UserRole(str, Enum):
@@ -25,3 +27,21 @@ class UserResponse(UserBase):
 
     class Config:
         from_attributes = True  # For SQLAlchemy -> Pydantic
+
+
+
+class CropBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    price: float
+    quantity: int
+
+class CropCreate(CropBase):
+    pass
+
+class CropOut(CropBase):
+    id: int
+    farmer_id: int
+
+    class Config:
+        orm_mode = True

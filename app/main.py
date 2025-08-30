@@ -1,7 +1,11 @@
 # app/main.py
 from fastapi.security import OAuth2PasswordRequestForm
-from app.auth import create_access_token
+from app.auth import create_access_token, get_current_user, role_required
 from datetime import timedelta
+from app import schemas
+from app.schemas import CropCreate, CropOut
+from app.crud import create_crop, get_crops
+
 
 @app.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
@@ -16,3 +20,39 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+@app.get("/farmers")
+def get_farmers(user=Depends(role_required("farmer"))):
+    return {"message": f"Hello Farmer {user.email}, here are your crops!"}
+
+@app.get("/buyers")
+def get_buyers(user=Depends(role_required("buyer"))):
+    return {"message": f"Hello Buyer {user.email}, here are the available products!"}
+
+@app.get("/suppliers")
+def get_suppliers(user=Depends(role_required("supplier"))):
+    return {"message": f"Hello Supplier {user.email}, here are the requests for tools/fertilizers!"}
+
+@app.get("/logistics")
+def get_logistics(user=Depends(role_required("logistics"))):
+    return {"message": f"Hello Logistics {user.email}, here are the delivery requests!"}
+
+@app.get("/me", response_model=schemas.UserOut)
+def read_users_me(current_user=Depends(get_current_user)):
+    return current_user
+
+
+@app.post("/crops/", response_model=CropOut)
+def create_crop_for_farmer(
+    crop: CropCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role != "farmer":
+        raise HTTPException(status_code=403, detail="Only farmers can add crops")
+    return create_crop(db=db, crop=crop, farmer_id=current_user.id)
+
+
+@app.get("/crops/", response_model=list[CropOut])
+def list_crops(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    return get_crops(db=db, skip=skip, limit=limit)

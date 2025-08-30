@@ -4,7 +4,6 @@ from app import models, schemas
 from passlib.context import CryptContext
 from app.auth import verify_password
 
-
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def get_password_hash(password: str):
@@ -38,3 +37,18 @@ def authenticate_user(db: Session, email: str, password: str):
         return None
     return user
 
+def create_crop(db: Session, crop: schemas.CropCreate, farmer_id: int):
+    db_crop = models.Crop(
+        name=crop.name,
+        description=crop.description,
+        price=crop.price,
+        quantity=crop.quantity,
+        farmer_id=farmer_id
+    )
+    db.add(db_crop)
+    db.commit()
+    db.refresh(db_crop)
+    return db_crop
+
+def get_crops(db: Session, skip: int = 0, limit: int = 10):
+    return db.query(models.Crop).offset(skip).limit(limit).all()
