@@ -4,8 +4,7 @@ from app.auth import create_access_token, get_current_user, role_required
 from datetime import timedelta
 from app import schemas
 from app.schemas import CropCreate, CropOut
-from app.crud import create_crop, get_crops
-
+from app.crud import create_crop, get_crops, update_crop, delete_crop
 
 @app.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
@@ -56,3 +55,33 @@ def create_crop_for_farmer(
 @app.get("/crops/", response_model=list[CropOut])
 def list_crops(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     return get_crops(db=db, skip=skip, limit=limit)
+
+@app.put("/crops/{crop_id}", response_model=CropOut)
+def update_crop_for_farmer(
+    crop_id: int,
+    crop: CropCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role != "farmer":
+        raise HTTPException(status_code=403, detail="Only farmers can update crops")
+    
+    updated = update_crop(db=db, crop_id=crop_id, crop=crop, farmer_id=current_user.id)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Crop not found or unauthorized")
+    return updated
+
+
+@app.delete("/crops/{crop_id}", response_model=CropOut)
+def delete_crop_for_farmer(
+    crop_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if current_user.role != "farmer":
+        raise HTTPException(status_code=403, detail="Only farmers can delete crops")
+    
+    deleted = delete_crop(db=db, crop_id=crop_id, farmer_id=current_user.id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Crop not found or unauthorized")
+    return deleted

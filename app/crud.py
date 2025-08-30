@@ -50,5 +50,25 @@ def create_crop(db: Session, crop: schemas.CropCreate, farmer_id: int):
     db.refresh(db_crop)
     return db_crop
 
-def get_crops(db: Session, skip: int = 0, limit: int = 10):
-    return db.query(models.Crop).offset(skip).limit(limit).all()
+def get_crop(db: Session, crop_id: int):
+    return db.query(models.Crop).filter(models.Crop.id == crop_id).first()
+
+def update_crop(db: Session, crop_id: int, crop: schemas.CropCreate, farmer_id: int):
+    db_crop = get_crop(db, crop_id)
+    if not db_crop or db_crop.farmer_id != farmer_id:
+        return None
+    db_crop.name = crop.name
+    db_crop.description = crop.description
+    db_crop.price = crop.price
+    db_crop.quantity = crop.quantity
+    db.commit()
+    db.refresh(db_crop)
+    return db_crop
+
+def delete_crop(db: Session, crop_id: int, farmer_id: int):
+    db_crop = get_crop(db, crop_id)
+    if not db_crop or db_crop.farmer_id != farmer_id:
+        return None
+    db.delete(db_crop)
+    db.commit()
+    return db_crop
