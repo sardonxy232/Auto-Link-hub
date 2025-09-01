@@ -3,7 +3,6 @@ from sqlalchemy import Column, Integer, String, Enum, Float, ForeignKey
 from app.database import Base
 import enum
 from sqlalchemy.orm import relationship
-from app.database import Base
 
 # Define possible roles
 class UserRole(enum.Enum):
@@ -16,10 +15,11 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    role = Column(Enum(UserRole), nullable=False)
+    email = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    role = Column(String, default="farmer")
+
+    produces = relationship("Produce", back_populates="owner")
 
 class Crop(Base):
     __tablename__ = "crops"
@@ -33,3 +33,14 @@ class Crop(Base):
 
     farmer = relationship("User")
 
+class Produce(Base):
+    __tablename__ = "produces"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    description = Column(String, nullable=True)
+    price = Column(Float)
+    quantity = Column(Integer)
+    owner_id = Column(Integer, ForeignKey("users.id"))
+
+    owner = relationship("User", back_populates="produces")

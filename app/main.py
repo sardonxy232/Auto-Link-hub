@@ -2,9 +2,13 @@
 from fastapi.security import OAuth2PasswordRequestForm
 from app.auth import create_access_token, get_current_user, role_required
 from datetime import timedelta
-from app import schemas
 from app.schemas import CropCreate, CropOut
 from app.crud import create_crop, get_crops, update_crop, delete_crop
+# app/main.py
+from fastapi import FastAPI, Depends
+from app import models, schemas, crud, auth, database
+from sqlalchemy.orm import Session
+
 
 @app.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
@@ -85,3 +89,30 @@ def delete_crop_for_farmer(
     if not deleted:
         raise HTTPException(status_code=404, detail="Crop not found or unauthorized")
     return deleted
+
+
+models.Base.metadata.create_all(bind=database.engine)
+
+app = FastAPI()
+
+# Dependency
+def get_db():
+    db = database.SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@app.post("/register", response_model=schemas.UserOut)
+def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    return crud.create_user(db=db, user=user)
+
+@app.post("/login", response_model=schemas.Token)
+def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
+    return auth.login_user(db=db, user=user)
+
+# ✅ New endpoint: Get current user
+@app.get("/users/me", response_model=schemas.UserOut)
+def read_users_me(current_user: models.User = Depends(auth.get_current_user)):
+    return current_user
+
