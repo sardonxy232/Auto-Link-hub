@@ -1,33 +1,26 @@
-# app/schemas.py
-from pydantic import BaseModel, EmailStr
-from enum import Enum
 from typing import Optional
-
-# ---------------------
-# Role Enum
-# ---------------------
-class UserRole(str, Enum):
-    farmer = "farmer"
-    buyer = "buyer"
-    supplier = "supplier"
-    logistics = "logistics"
+from pydantic import BaseModel
 
 # ---------------------
 # User Schemas
 # ---------------------
 class UserBase(BaseModel):
     username: str
-    email: EmailStr
-    role: UserRole
+    email: str
 
 class UserCreate(UserBase):
+    password: str
+
+class UserLogin(BaseModel):
+    email: str
     password: str
 
 class UserOut(UserBase):
     id: int
 
     class Config:
-        from_attributes = True  # Pydantic v2 replacement for orm_mode
+        from_attributes = True
+
 
 # ---------------------
 # Crop Schemas
@@ -35,19 +28,16 @@ class UserOut(UserBase):
 class CropBase(BaseModel):
     name: str
     description: Optional[str] = None
-    price: float
-    quantity: int
 
 class CropCreate(CropBase):
     pass
 
 class CropOut(CropBase):
     id: int
-    image: Optional[str]
-    farmer_id: int
 
     class Config:
         from_attributes = True
+
 
 # ---------------------
 # Produce Schemas
@@ -56,29 +46,72 @@ class ProduceBase(BaseModel):
     name: str
     description: Optional[str] = None
     price: float
-    quantity: int
 
 class ProduceCreate(ProduceBase):
     pass
 
-class ProduceUpdate(ProduceBase):
-    pass
-
 class ProduceOut(ProduceBase):
     id: int
-    image: Optional[str]
-    owner_id: int
+    farmer_id: int
 
     class Config:
         from_attributes = True
 
-# ---------------------
-# Auth Schemas
-# ---------------------
-class Token(BaseModel):
-    access_token: str
-    token_type: str
 
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
+# ---------------------
+# Supplier Schemas
+# ---------------------
+class SupplierItemBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    price: float
+    quantity: int
+
+class SupplierItemCreate(SupplierItemBase):
+    pass
+
+class SupplierItemOut(SupplierItemBase):
+    id: int
+    supplier_id: int
+
+    class Config:
+        from_attributes = True
+
+
+# ---------------------
+# Order Schemas
+# ---------------------
+class OrderBase(BaseModel):
+    item_name: str
+    quantity: int
+    total_price: float
+
+class OrderCreate(OrderBase):
+    pass
+
+class OrderOut(OrderBase):
+    id: int
+    buyer_id: int
+    status: str
+
+    class Config:
+        from_attributes = True
+
+
+# ---------------------
+# Logistics Schemas
+# ---------------------
+class LogisticsJobBase(BaseModel):
+    description: str
+    destination: str
+    status: Optional[str] = "pending"
+
+class LogisticsJobCreate(LogisticsJobBase):
+    pass
+
+class LogisticsJobOut(LogisticsJobBase):
+    id: int
+    logistics_id: int
+
+    class Config:
+        from_attributes = True

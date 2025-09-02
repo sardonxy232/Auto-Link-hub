@@ -1,168 +1,123 @@
-# app/main.py
-from datetime import timedelta
+# main.py
 from fastapi import FastAPI, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from app import models, schemas
+from app.database import engine, get_db
+from fastapi.staticfiles import StaticFiles
+import os
 
-from app import models, schemas, crud, auth, database
-from app.auth import create_access_token, get_current_user, role_required
+models.Base.metadata.create_all(bind=engine)
 
-# ---------------------
-# Database setup
-# ---------------------
-models.Base.metadata.create_all(bind=database.engine)
+app = FastAPI(
+    title="Agric Link Hub API 🚜🌱",
+    description="API for managing users, authentication, and products",
+    version="1.0.0",
+    docs_url="/docs",   # Swagger UI
+    redoc_url="/redoc", # ReDoc
+    openapi_url="/openapi.json"
+)
 
-app = FastAPI()
 
-# Dependency
-def get_db():
-    db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+@app.get("/")
+def root():
+    return {
+        "message": "Welcome to Agric Link Hub API 🚜🌱",
+        "docs": "/docs",
+        "redoc": "/redoc"
+    }
 
-# ---------------------
-# Authentication
-# ---------------------
-
-@app.post("/register", response_model=schemas.UserOut)
-def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    return crud.create_user(db=db, user=user)
-
-@app.post("/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = crud.authenticate_user(db, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    access_token_expires = timedelta(minutes=30)
-    access_token = create_access_token(
-        data={"sub": user.email, "role": user.role}, 
-        expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
-
-@app.get("/users/me", response_model=schemas.UserOut)
-def read_users_me(current_user: models.User = Depends(get_current_user)):
-    return current_user
 
 # ---------------------
-# Role-Based Endpoints
+# Suppliers Endpoints
 # ---------------------
+@app.post("/suppliers/", response_model=schemas.SupplierItemOut)
+def create_supplier_item(item: schemas.SupplierItemCreate, db: Session = Depends(get_db)):
+    db_item = models.SupplierItem(**item.dict(), supplier_id=1)  # Replace with actual logged-in supplier
+    db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    return db_item
 
-@app.get("/farmers")
-def get_farmers(user=Depends(role_required("farmer"))):
-    return {"message": f"Hello Farmer {user.email}, here are your crops!"}
+@app.get("/suppliers/", response_model=list[schemas.SupplierItemOut])
+def read_supplier_items(db: Session = Depends(get_db)):
+    return db.query(models.SupplierItem).all()
 
-@app.get("/buyers")
-def get_buyers(user=Depends(role_required("buyer"))):
-    return {"message": f"Hello Buyer {user.email}, here are the available products!"}
+@app.get("/suppliers/{item_id}", response_model=schemas.SupplierItemOut)
+def read_supplier_item(item_id: int, db: Session = Depends(get_db)):
+    db_item = db.query(models.SupplierItem).filter(models.SupplierItem.id == item_id).first()
+    if not db_item:
+        raise HTTPException(status_code=404, detail="Supplier item not found")
+    return db_item
 
-@app.get("/suppliers")
-def get_suppliers(user=Depends(role_required("supplier"))):
-    return {"message": f"Hello Supplier {user.email}, here are the requests for tools/fertilizers!"}
+@app.delete("/suppliers/{item_id}")
+def delete_supplier_item(item_id: int, db: Session = Depends(get_db)):
+    db_item = db.query(models.SupplierItem).filter(models.SupplierItem.id == item_id).first()
+    if not db_item:
+        raise HTTPException(status_code=404, detail="Supplier item not found")
+    db.delete(db_item)
+    db.commit()
+    return {"detail": "Supplier item deleted successfully"}
 
-@app.get("/logistics")
-def get_logistics(user=Depends(role_required("logistics"))):
-    return {"message": f"Hello Logistics {user.email}, here are the delivery requests!"}
-
-# ---------------------
-# Crop Endpoints
-# ---------------------
-
-@app.post("/crops/", response_model=schemas.CropOut)
-def create_crop_for_farmer(
-    crop: schemas.CropCreate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
-):
-    if current_user.role != "farmer":
-        raise HTTPException(status_code=403, detail="Only farmers can add crops")
-    return crud.create_crop(db=db, crop=crop, farmer_id=current_user.id)
-
-@app.get("/crops/", response_model=list[schemas.CropOut])
-def list_crops(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    return crud.get_crops(db=db, skip=skip, limit=limit)
-
-@app.put("/crops/{crop_id}", response_model=schemas.CropOut)
-def update_crop_for_farmer(
-    crop_id: int,
-    crop: schemas.CropCreate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
-):
-    if current_user.role != "farmer":
-        raise HTTPException(status_code=403, detail="Only farmers can update crops")
-    
-    updated = crud.update_crop(db=db, crop_id=crop_id, crop=crop, farmer_id=current_user.id)
-    if not updated:
-        raise HTTPException(status_code=404, detail="Crop not found or unauthorized")
-    return updated
-
-@app.delete("/crops/{crop_id}", response_model=schemas.CropOut)
-def delete_crop_for_farmer(
-    crop_id: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
-):
-    if current_user.role != "farmer":
-        raise HTTPException(status_code=403, detail="Only farmers can delete crops")
-    
-    deleted = crud.delete_crop(db=db, crop_id=crop_id, farmer_id=current_user.id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Crop not found or unauthorized")
-    return deleted
 
 # ---------------------
-# Produce Endpoints
+# Orders Endpoints
 # ---------------------
+@app.post("/orders/", response_model=schemas.OrderOut)
+def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
+    db_order = models.Order(**order.dict(), buyer_id=1, status="pending")  # Replace with actual buyer
+    db.add(db_order)
+    db.commit()
+    db.refresh(db_order)
+    return db_order
 
-@app.post("/produces/", response_model=schemas.ProduceOut)
-def create_produce(
-    produce: schemas.ProduceCreate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
-):
-    if current_user.role != "farmer":
-        raise HTTPException(status_code=403, detail="Only farmers can create produce")
-    return crud.create_produce(db=db, produce=produce, user_id=current_user.id)
+@app.get("/orders/", response_model=list[schemas.OrderOut])
+def read_orders(db: Session = Depends(get_db)):
+    return db.query(models.Order).all()
 
-@app.get("/produces/", response_model=list[schemas.ProduceOut])
-def read_produces(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    return crud.get_produces(db=db, skip=skip, limit=limit)
+@app.get("/orders/{order_id}", response_model=schemas.OrderOut)
+def read_order(order_id: int, db: Session = Depends(get_db)):
+    db_order = db.query(models.Order).filter(models.Order.id == order_id).first()
+    if not db_order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return db_order
 
-@app.get("/produces/{produce_id}", response_model=schemas.ProduceOut)
-def read_produce(produce_id: int, db: Session = Depends(get_db)):
-    db_produce = crud.get_produce_by_id(db, produce_id)
-    if not db_produce:
-        raise HTTPException(status_code=404, detail="Produce not found")
-    return db_produce
+@app.delete("/orders/{order_id}")
+def delete_order(order_id: int, db: Session = Depends(get_db)):
+    db_order = db.query(models.Order).filter(models.Order.id == order_id).first()
+    if not db_order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    db.delete(db_order)
+    db.commit()
+    return {"detail": "Order deleted successfully"}
 
-@app.put("/produces/{produce_id}", response_model=schemas.ProduceOut)
-def update_produce(
-    produce_id: int,
-    produce: schemas.ProduceUpdate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
-):
-    db_produce = crud.get_produce_by_id(db, produce_id)
-    if not db_produce:
-        raise HTTPException(status_code=404, detail="Produce not found")
-    if db_produce.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to update this produce")
-    return crud.update_produce(db, produce_id, produce)
 
-@app.delete("/produces/{produce_id}")
-def delete_produce(
-    produce_id: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
-):
-    db_produce = crud.get_produce_by_id(db, produce_id)
-    if not db_produce:
-        raise HTTPException(status_code=404, detail="Produce not found")
-    if db_produce.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to delete this produce")
-    crud.delete_produce(db, produce_id)
-    return {"status": "deleted"}
+# ---------------------
+# Logistics Endpoints
+# ---------------------
+@app.post("/logistics/", response_model=schemas.LogisticsJobOut)
+def create_logistics_job(job: schemas.LogisticsJobCreate, db: Session = Depends(get_db)):
+    db_job = models.LogisticsJob(**job.dict(), logistics_id=1)  # Replace with actual logistics user
+    db.add(db_job)
+    db.commit()
+    db.refresh(db_job)
+    return db_job
+
+@app.get("/logistics/", response_model=list[schemas.LogisticsJobOut])
+def read_logistics_jobs(db: Session = Depends(get_db)):
+    return db.query(models.LogisticsJob).all()
+
+@app.get("/logistics/{job_id}", response_model=schemas.LogisticsJobOut)
+def read_logistics_job(job_id: int, db: Session = Depends(get_db)):
+    db_job = db.query(models.LogisticsJob).filter(models.LogisticsJob.id == job_id).first()
+    if not db_job:
+        raise HTTPException(status_code=404, detail="Logistics job not found")
+    return db_job
+
+@app.delete("/logistics/{job_id}")
+def delete_logistics_job(job_id: int, db: Session = Depends(get_db)):
+    db_job = db.query(models.LogisticsJob).filter(models.LogisticsJob.id == job_id).first()
+    if not db_job:
+        raise HTTPException(status_code=404, detail="Logistics job not found")
+    db.delete(db_job)
+    db.commit()
+    return {"detail": "Logistics job deleted successfully"}

@@ -27,6 +27,10 @@ class User(Base):
     # Relationships
     produces = relationship("Produce", back_populates="owner")
     crops = relationship("Crop", back_populates="farmer")
+    supplier_items = relationship("SupplierItem", back_populates="supplier")
+    orders = relationship("Order", back_populates="buyer")
+    logistics_jobs = relationship("LogisticsJob", back_populates="logistics")
+
 
 # ---------------------
 # Crop Model
@@ -45,6 +49,7 @@ class Crop(Base):
     # Relationships
     farmer = relationship("User", back_populates="crops")
 
+
 # ---------------------
 # Produce Model
 # ---------------------
@@ -61,3 +66,54 @@ class Produce(Base):
 
     # Relationships
     owner = relationship("User", back_populates="produces")
+
+
+# ---------------------
+# Supplier Item Model
+# ---------------------
+class SupplierItem(Base):
+    __tablename__ = "supplier_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    price = Column(Float, nullable=False)
+    quantity = Column(Integer, nullable=False)
+    supplier_id = Column(Integer, ForeignKey("users.id"))
+
+    # Relationships
+    supplier = relationship("User", back_populates="supplier_items")
+
+
+# ---------------------
+# Order Model
+# ---------------------
+class Order(Base):
+    __tablename__ = "orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    item_name = Column(String, nullable=False)
+    quantity = Column(Integer, nullable=False)
+    total_price = Column(Float, nullable=False)
+    status = Column(String, default="pending")
+    buyer_id = Column(Integer, ForeignKey("users.id"))
+
+    # Relationships
+    buyer = relationship("User", back_populates="orders")
+
+
+# ---------------------
+# Logistics Job Model
+# ---------------------
+class LogisticsJob(Base):
+    __tablename__ = "logistics_jobs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    description = Column(String, nullable=False)
+    destination = Column(String, nullable=False)
+    status = Column(String, default="pending")
+    logistics_id = Column(Integer, ForeignKey("users.id"))
+
+    # Relationships
+    logistics = relationship("User", back_populates="logistics_jobs")
+    
